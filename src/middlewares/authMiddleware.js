@@ -1,51 +1,85 @@
 const jwt = require('jsonwebtoken');
 
-const authMiddleware = (req, res, next) => {
-    const token = req.header('Authorization');
-    if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+const verifyAdmin = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Use optional chaining
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.admin = decoded.adminId;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: 'Token is not valid' });
+  if (!token) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded JWT:", decoded); // Log decoded token
+
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: "Admins only" });
     }
+
+    req.user = decoded; // Attach decoded token to req.user
+    next();
+  } catch (error) {
+    console.error("JWT verification error:", error); // Log any errors
+    return res.status(401).json({ message: "Invalid Token" });
+  }
 };
 
 
-const blacklistedTokens =[]
-const logout =(req,res)=>{
+const verifyCompany = (req, res, next) => {
+  const token = req.headers.authorization.split(" ")[1];
+
+  if (!token) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'user') {
+      return res.status(403).json({ message: "Companies only" });
+    }
+    req.user = decoded;
+
+    console.log(req.user, '++++++++++++++++++++++++++++');
+
+    res.json({ message: `Welcome to the Company Dashboard!` });
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid Token" });
+  }
+};
+
+
+
+const blacklistedTokens = []
+const logout = (req, res) => {
   const token = req.headers.authorization.split(" ")[1]
 
-  if(token){
+  if (token) {
     blacklistedTokens.push(token)
-    return res.status(200).json({message:"Logged out successfully"})
-  }else{
-    return res.status(400).json({message:"No token provided"})
+    return res.status(200).json({ message: "Logged out successfully" })
+  } else {
+    return res.status(400).json({ message: "No token provided" })
   }
-  
+
 }
 
 const authenticate = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
+  const token = req.headers['authorization']?.split(' ')[1];
 
-    if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  if (blacklistedTokens.includes(token)) {
+    return res.status(401).json({ message: 'Unauthorized access' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-
-    if (blacklistedTokens.includes(token)) {
-        return res.status(401).json({ message: 'Unauthorized access' });
-      }
-
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-        req.adminId = decoded.adminId; // Store adminId for later use
-        next();
-    });
+    req.adminId = decoded.adminId; // Store adminId for later use
+    next();
+  });
 };
 
 
-module.exports = {authMiddleware,authenticate,logout};
+module.exports = { verifyAdmin, verifyCompany, authenticate, logout };

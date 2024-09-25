@@ -6,7 +6,7 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'user'], required: true },
     name: { type: String, required: true }
-});
+}, { timestamps: true });
 // Password hashing
 adminSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
