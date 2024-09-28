@@ -46,6 +46,35 @@ const verifyCompany = (req, res, next) => {
   }
 };
 
+const verifyCandidate = (req, res, next) => {
+  // Extract the token from the Authorization header (format: Bearer <token>)
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if the role is 'candidate'
+    if (decoded.role !== 'candidate') {
+      return res.status(403).json({ message: "Candidates only" });
+    }
+
+    // Attach the decoded token to the req.user object for further use
+    req.user = decoded;
+
+    console.log(req.user, '++++++++++++++++++++++++++++');
+
+    // Call the next middleware or function
+    next();
+  } catch (error) {
+    // If token verification fails, return an error
+    return res.status(401).json({ message: "Invalid Token" });
+  }
+};
 
 
 const blacklistedTokens = []
@@ -82,4 +111,4 @@ const authenticate = (req, res, next) => {
 };
 
 
-module.exports = { verifyAdmin, verifyCompany, authenticate, logout };
+module.exports = { verifyAdmin, verifyCompany, authenticate,verifyCandidate, logout };

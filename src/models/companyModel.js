@@ -8,7 +8,7 @@ const companySchema = new mongoose.Schema({
     companyId: { type: String, required: true, unique: true },
     contactNo: { type: String, required: true },
     location: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'user'], required: true },
+    role: { type: String, enum: ['admin', 'user','candidate'], required: true },
     representative: { type: String, required: true },
     email: { type: String, required: true, unique: true }, // Add email field
     password: { type: String, required: true }, // Add password field
