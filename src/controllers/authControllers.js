@@ -61,14 +61,20 @@ const addCompany = async (req, res) => {
     contactNo,
     location,
     representative,
-    email, // This is the company's email
+    email,
     password,
   } = req.body;
 
   try {
-    // Extract admin ID from the token (set by the `verifyAdmin` middleware)
-    const adminId = req.user.adminId;
-
+    const adminId = req.user.userId;
+    console.log(adminId,"////////////////");
+    
+    
+    
+    if (!adminId) {
+      return res.status(400).json({ message: 'Admin ID is missing' });
+    }
+    
     // Define role as 'user'
     const role = 'user';
 
@@ -89,13 +95,11 @@ const addCompany = async (req, res) => {
 
     const savedCompany = await newCompany.save();
 
-    // Send an email notification to the company
     const subject = 'Company Registration Successful';
     const text = `Dear ${representative},\n\nYour company, ${companyName}, has been successfully registered in our system. Your email is ${email}.\n\nThank you!`;
 
-    sendLoginEmail(email, subject, text); // Sending the email to the company's email
+    sendLoginEmail(email, subject, text);
 
-    // Return a success response
     res.status(201).json({
       data: {
         message: 'Company details added successfully',
@@ -119,7 +123,7 @@ const addCandidate = async (req, res) => {
 
   try {
     // Extract admin ID from the token (set by the `verifyAdmin` middleware)
-    const adminId = req.user.adminId;
+    const adminId = req.user.userId;
 
     // Define role as 'candidate'
     const role = 'candidate';
@@ -213,4 +217,4 @@ const updateCandidateEmail = async (req, res) => {
 };
 
 
-module.exports = { login, addCompany,updateCompanyEmail,addCandidate ,updateCandidateEmail};
+module.exports = { login, addCompany,updateCompanyEmail,updateCandidateEmail,addCandidate};
